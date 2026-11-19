@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Lock, Shield, Clock, Heart, Mail, Linkedin, Github } from 'lucide-react';
+import { Box, Lock, Shield, Clock, Heart, Mail, Linkedin, Github, Globe } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -37,23 +37,44 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Middle row: Developer Credit & Social Profiles */}
-        <div className="pt-6 border-t border-sb-border/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* Middle row: Developer Credit & Profile Links */}
+        <div className="pt-6 border-t border-sb-border/60 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex items-center gap-1.5 text-xs text-primary-text">
             <span>Designed &amp; Developed with</span>
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline-block transition-transform hover:scale-125 duration-200" />
             <span>by</span>
-            <span className="font-semibold text-primary-text">Akhil Y</span>
+            <a
+              href="https://portfolio-akhil-3e53.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-primary-text hover:text-accent transition-colors"
+              title="Akhil Y Portfolio"
+            >
+              Akhil Y
+            </a>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs">
             <a
-              href="mailto:akhilyalamanchilii@gmail.com"
+              href="https://portfolio-akhil-3e53.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sb-border bg-background/50 hover:bg-background hover:border-zinc-300 text-secondary-text hover:text-primary-text transition-all duration-150 shadow-subtle group"
-              title="Contact Akhil Y via Email"
+              title="Akhil Y Portfolio"
             >
-              <Mail className="w-3.5 h-3.5 text-zinc-400 group-hover:text-accent transition-colors" />
-              <span className="text-[11px] font-medium">akhilyalamanchilii@gmail.com</span>
+              <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-accent transition-colors" />
+              <span className="text-[11px] font-medium">Portfolio</span>
+            </a>
+
+            <a
+              href="https://github.com/AKHIL-YALAMANCHILI18"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sb-border bg-background/50 hover:bg-background hover:border-zinc-300 text-secondary-text hover:text-primary-text transition-all duration-150 shadow-subtle group"
+              title="Akhil Y on GitHub"
+            >
+              <Github className="w-3.5 h-3.5 text-zinc-400 group-hover:text-primary-text transition-colors" />
+              <span className="text-[11px] font-medium">GitHub</span>
             </a>
 
             <a
@@ -68,14 +89,12 @@ export function Footer() {
             </a>
 
             <a
-              href="https://github.com/AKHIL-YALAMANCHILI18"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:akhilyalamanchilii@gmail.com"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sb-border bg-background/50 hover:bg-background hover:border-zinc-300 text-secondary-text hover:text-primary-text transition-all duration-150 shadow-subtle group"
-              title="Akhil Y on GitHub"
+              title="Contact Akhil Y via Email"
             >
-              <Github className="w-3.5 h-3.5 text-zinc-400 group-hover:text-primary-text transition-colors" />
-              <span className="text-[11px] font-medium">GitHub</span>
+              <Mail className="w-3.5 h-3.5 text-zinc-400 group-hover:text-accent transition-colors" />
+              <span className="text-[11px] font-medium">akhilyalamanchilii@gmail.com</span>
             </a>
           </div>
         </div>

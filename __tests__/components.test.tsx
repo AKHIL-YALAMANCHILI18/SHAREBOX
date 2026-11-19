@@ -58,8 +58,11 @@ describe('UI Component Library', () => {
   test('Footer renders developer credit and social links', () => {
     render(<Footer />);
     expect(screen.getByText(/Designed & Developed with/i)).toBeInTheDocument();
-    expect(screen.getByText('Akhil Y')).toBeInTheDocument();
     expect(screen.getByText('akhilyalamanchilii@gmail.com')).toBeInTheDocument();
+
+    const portfolioLinks = screen.getAllByTitle('Akhil Y Portfolio');
+    expect(portfolioLinks.length).toBeGreaterThanOrEqual(1);
+    expect(portfolioLinks[0]).toHaveAttribute('href', 'https://portfolio-akhil-3e53.vercel.app');
 
     const emailLink = screen.getByTitle('Contact Akhil Y via Email');
     expect(emailLink).toHaveAttribute('href', 'mailto:akhilyalamanchilii@gmail.com');

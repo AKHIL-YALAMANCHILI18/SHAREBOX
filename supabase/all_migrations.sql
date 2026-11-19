@@ -1,5 +1,5 @@
 -- all_migrations.sql
--- Consolidated schema, RLS, Realtime, and Storage setup for SHAREBOX
+-- Consolidated schema, Hardened RLS, Realtime, and Storage setup for SHAREBOX
 -- Run this in the Supabase SQL Editor to set up the entire database in one click.
 
 -- ========================================================
@@ -73,47 +73,18 @@ CREATE INDEX IF NOT EXISTS idx_upload_sessions_file ON upload_sessions(file_id);
 CREATE INDEX IF NOT EXISTS idx_upload_sessions_expires_at ON upload_sessions(expires_at);
 
 -- ========================================================
--- 3. ROW LEVEL SECURITY (RLS)
+-- 3. HARDENED ROW LEVEL SECURITY (RLS)
 -- ========================================================
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE upload_sessions ENABLE ROW LEVEL SECURITY;
 
--- Allow reading active, unexpired rooms
-CREATE POLICY "Allow public read access to active rooms"
-  ON rooms FOR SELECT TO anon, authenticated
-  USING (is_active = true AND expires_at > now());
-
--- Allow reading participants in active, unexpired rooms
-CREATE POLICY "Allow public read access to participants in active rooms"
-  ON participants FOR SELECT TO anon, authenticated
-  USING (
-    is_active = true
-    AND EXISTS (
-      SELECT 1 FROM rooms
-      WHERE rooms.id = participants.room_id
-        AND rooms.is_active = true
-        AND rooms.expires_at > now()
-    )
-  );
-
--- Allow reading completed files in active, unexpired rooms
-CREATE POLICY "Allow public read access to completed files in active rooms"
-  ON files FOR SELECT TO anon, authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM rooms
-      WHERE rooms.id = files.room_id
-        AND rooms.is_active = true
-        AND rooms.expires_at > now()
-    )
-  );
-
--- Grant select to anon/authenticated
-GRANT SELECT ON rooms TO anon, authenticated;
-GRANT SELECT ON participants TO anon, authenticated;
-GRANT SELECT ON files TO anon, authenticated;
+-- Revoke all default public permissions (Defends against room enumeration & token leakage)
+REVOKE ALL ON rooms FROM anon, authenticated;
+REVOKE ALL ON participants FROM anon, authenticated;
+REVOKE ALL ON files FROM anon, authenticated;
+REVOKE ALL ON upload_sessions FROM anon, authenticated;
 
 -- ========================================================
 -- 4. REALTIME PUBLICATION
@@ -139,17 +110,18 @@ BEGIN
 END $$;
 
 -- ========================================================
--- 5. STORAGE BUCKET
+-- 5. STORAGE BUCKET CONFIGURATION
 -- ========================================================
+-- Default 52428800 bytes (50 MB) for Supabase Free Tier compatibility
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'sharebox-files',
   'sharebox-files',
   false,
-  524288000,
+  52428800,
   NULL
 )
 ON CONFLICT (id) DO UPDATE SET
   public = false,
-  file_size_limit = 524288000,
+  file_size_limit = 52428800,
   allowed_mime_types = NULL;

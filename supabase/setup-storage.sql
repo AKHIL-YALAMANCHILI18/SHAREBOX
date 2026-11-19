@@ -2,18 +2,18 @@
 -- Storage bucket initialization and configuration for SHAREBOX
 
 -- 1. Create the private storage bucket 'sharebox-files' if it does not exist
--- max_file_size: 524288000 bytes (500 MB)
+-- max_file_size: 52428800 bytes (50 MB default for Supabase Free Tier compatibility)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'sharebox-files',
   'sharebox-files',
   false,               -- Private bucket: downloads require signed URLs
-  524288000,           -- 500 MB limit
+  52428800,            -- 50 MB Free Tier limit (configurable to 500 MB on Pro)
   NULL                 -- Universal transfer: all MIME types permitted
 )
 ON CONFLICT (id) DO UPDATE SET
   public = false,
-  file_size_limit = 524288000,
+  file_size_limit = 52428800,
   allowed_mime_types = NULL;
 
 -- 2. Storage Policies

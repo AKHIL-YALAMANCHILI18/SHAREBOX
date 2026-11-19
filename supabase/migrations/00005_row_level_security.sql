@@ -1,5 +1,6 @@
 -- 00005_row_level_security.sql
--- Row Level Security (RLS) policies for SHAREBOX
+-- Hardened Row Level Security (RLS) policies for SHAREBOX
+-- Prevents room enumeration, session token leakage, and unauthorized metadata access.
 
 -- 1. Enable RLS on all tables
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
@@ -7,53 +8,25 @@ ALTER TABLE participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE upload_sessions ENABLE ROW LEVEL SECURITY;
 
--- 2. Rooms policies
--- Allow anonymous users to view active, non-expired rooms by code/id
-CREATE POLICY "Allow public read access to active rooms"
-  ON rooms
-  FOR SELECT
-  TO anon, authenticated
-  USING (
-    is_active = true 
-    AND expires_at > now()
-  );
+-- 2. Revoke all default public permissions
+REVOKE ALL ON rooms FROM anon, authenticated;
+REVOKE ALL ON participants FROM anon, authenticated;
+REVOKE ALL ON files FROM anon, authenticated;
+REVOKE ALL ON upload_sessions FROM anon, authenticated;
 
--- 3. Participants policies
--- Allow reading participant public metadata (display names) for active non-expired rooms
-CREATE POLICY "Allow public read access to participants in active rooms"
-  ON participants
-  FOR SELECT
-  TO anon, authenticated
-  USING (
-    is_active = true
-    AND EXISTS (
-      SELECT 1 FROM rooms
-      WHERE rooms.id = participants.room_id
-        AND rooms.is_active = true
-        AND rooms.expires_at > now()
-    )
-  );
+-- 3. Strict RLS Policies
+-- All database writes, room queries, authentication checks, and file operations
+-- are strictly handled through server-side Next.js route handlers utilizing the service_role key.
+-- Direct table access by anon or public clients is strictly prohibited to prevent:
+--   a) Room enumeration (scraping active 8-digit room codes)
+--   b) Participant token hash exposure (session hijacking)
+--   c) Global file metadata and storage path harvesting
 
--- 4. Files policies
--- Allow reading files metadata in active non-expired rooms
-CREATE POLICY "Allow public read access to completed files in active rooms"
-  ON files
-  FOR SELECT
-  TO anon, authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM rooms
-      WHERE rooms.id = files.room_id
-        AND rooms.is_active = true
-        AND rooms.expires_at > now()
-    )
-  );
+-- Allow authenticated service_role full access (inherent in Supabase service_role, explicit for clarity)
+-- Anon clients interacting with Realtime Broadcast and Presence use WebSocket channels (room:<id>),
+-- which operate independently of table SELECT permissions.
 
--- 5. Upload Sessions policies
--- Strictly restricted - no direct public read or write access
--- Managed purely through service-role backend handlers
-
--- Grant necessary read permissions to anon and authenticated roles
-GRANT SELECT ON rooms TO anon, authenticated;
-GRANT SELECT ON participants TO anon, authenticated;
-GRANT SELECT ON files TO anon, authenticated;
+COMMENT ON TABLE rooms IS 'SHAREBOX rooms protected by server-side mediation and strict RLS.';
+COMMENT ON TABLE participants IS 'Participant sessions are private. Hashes are never exposed to clients.';
+COMMENT ON TABLE files IS 'File records are private. Access is authorized via server-generated signed URLs.';
+COMMENT ON TABLE upload_sessions IS 'Upload sessions are strictly private to the server.';

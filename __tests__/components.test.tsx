@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { CopyButton } from '@/components/ui/copy-button';
+import { Footer } from '@/components/layout/footer';
 
 describe('UI Component Library', () => {
   test('Button renders children and handles click events', () => {
@@ -52,5 +53,23 @@ describe('UI Component Library', () => {
     render(<CopyButton value="12345678" label="Copy Code" onCopySuccess={onCopy} />);
     const btn = screen.getByRole('button', { name: /copy code/i });
     expect(btn).toBeInTheDocument();
+  });
+
+  test('Footer renders developer credit and social links', () => {
+    render(<Footer />);
+    expect(screen.getByText(/Designed & Developed with/i)).toBeInTheDocument();
+    expect(screen.getByText('Akhil Y')).toBeInTheDocument();
+    expect(screen.getByText('akhilyalamanchilii@gmail.com')).toBeInTheDocument();
+
+    const emailLink = screen.getByTitle('Contact Akhil Y via Email');
+    expect(emailLink).toHaveAttribute('href', 'mailto:akhilyalamanchilii@gmail.com');
+
+    const linkedInLink = screen.getByTitle('Akhil Y on LinkedIn');
+    expect(linkedInLink).toHaveAttribute('href', 'https://www.linkedin.com/in/akhil-y-b97b55289/');
+
+    const githubLink = screen.getByTitle('Akhil Y on GitHub');
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/AKHIL-YALAMANCHILI18');
+
+    expect(screen.getByText(/© 2026 SHAREBOX\. All rights reserved\./i)).toBeInTheDocument();
   });
 });

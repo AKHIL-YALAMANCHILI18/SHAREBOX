@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Footer } from '@/components/layout/footer';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -31,7 +32,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="min-h-full flex flex-col bg-background text-primary-text antialiased selection:bg-accent/15 selection:text-accent">
-        {children}
+        <div className="flex-1 flex flex-col">
+          {children}
+        </div>
+        <Footer />
       </body>
     </html>
   );

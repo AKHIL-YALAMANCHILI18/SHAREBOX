@@ -40,9 +40,9 @@ export function RoomClient({
 
   if (isExpired || !room.is_active) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="flex-1 flex flex-col bg-background">
         <RoomHeader room={room} participantCount={0} />
-        <main className="container-tight py-8">
+        <main className="container-tight py-8 flex-1">
           <RoomExpired />
         </main>
       </div>
@@ -50,7 +50,7 @@ export function RoomClient({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex-1 flex flex-col bg-background">
       <RoomHeader room={room} participantCount={participants.length} />
 
       <main className="container-tight py-6 sm:py-8 space-y-6 flex-1">

@@ -53,9 +53,9 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="flex-1 flex flex-col bg-background">
         <RoomHeader room={room} participantCount={0} />
-        <main className="container-tight py-12">
+        <main className="container-tight py-12 flex-1">
           <RoomExpired />
         </main>
       </div>

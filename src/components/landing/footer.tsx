@@ -38,7 +38,7 @@ export function Footer() {
         </div>
 
         <div className="pt-6 border-t border-sb-border/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-400">
-          <p>© {new Date().getFullYear()} SHAREBOX. Built with Next.js, Supabase & Tailwind CSS.</p>
+          <p>© {new Date().getFullYear()} SHAREBOX v1.0.1. Built with Next.js, Supabase & Tailwind CSS.</p>
           <div className="flex items-center gap-4">
             <span>Ephemeral storage</span>
             <span>•</span>

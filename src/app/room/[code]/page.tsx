@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import {
@@ -16,6 +17,14 @@ export const dynamic = 'force-dynamic';
 
 interface RoomPageProps {
   params: Promise<{ code: string }>;
+}
+
+export async function generateMetadata({ params }: RoomPageProps): Promise<Metadata> {
+  const { code } = await params;
+  return {
+    title: `Room #${code}`,
+    description: `Active file sharing room #${code}. Transfer files securely with real-time peer sync on SHAREBOX.`,
+  };
 }
 
 export default async function RoomPage({ params }: RoomPageProps) {

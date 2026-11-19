@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none">
+  <!-- Minimalist dark badge container -->
+  <rect width="32" height="32" rx="7" fill="#18181B"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" stroke="#27272A" stroke-width="1"/>
+  
+  <!-- SHAREBOX Isometric Cube Logo -->
+  <g transform="translate(4, 4)">
+    <!-- Top Face Subtle Fill -->
+    <path d="M12 3.3L20.7 8.3L12 13.3L3.3 8.3Z" fill="#6366F1" fill-opacity="0.35"/>
+    <!-- Left Face Subtle Fill -->
+    <path d="M3.3 8.3L12 13.3V22L3.3 17Z" fill="#6366F1" fill-opacity="0.18"/>
+    <!-- Right Face Subtle Fill -->
+    <path d="M12 13.3L20.7 8.3V17L12 22Z" fill="#6366F1" fill-opacity="0.25"/>
+    
+    <!-- Lucide Box 3D Cube Contours -->
+    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m3.3 7 8.7 5 8.7-5" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 22V12" stroke="#818CF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

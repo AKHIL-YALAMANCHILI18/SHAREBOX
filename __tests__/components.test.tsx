@@ -1,12 +1,13 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Footer } from '@/components/layout/footer';
+import { DeveloperIntroBanner } from '@/components/layout/dev-intro-banner';
 
 describe('UI Component Library', () => {
   test('Button renders children and handles click events', () => {
@@ -74,5 +75,52 @@ describe('UI Component Library', () => {
     expect(githubLink).toHaveAttribute('href', 'https://github.com/AKHIL-YALAMANCHILI18');
 
     expect(screen.getByText(/© 2026 SHAREBOX\. All rights reserved\./i)).toBeInTheDocument();
+  });
+
+  test('DeveloperIntroBanner appears after delay and can be dismissed', () => {
+    jest.useFakeTimers();
+    localStorage.clear();
+    sessionStorage.clear();
+
+    const { unmount } = render(<DeveloperIntroBanner />);
+    expect(screen.queryByText(/Hey, I'm Akhil!/i)).not.toBeInTheDocument();
+
+    act(() => {
+      jest.advanceTimersByTime(4000);
+    });
+
+    expect(screen.getByText(/Hey, I'm Akhil!/i)).toBeInTheDocument();
+    expect(screen.getByText(/I built SHAREBOX to make file sharing simple/i)).toBeInTheDocument();
+
+    const githubLink = screen.getByRole('link', { name: /contribute on github/i });
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/AKHIL-YALAMANCHILI18/SHAREBOX');
+
+    const contactLink = screen.getByRole('link', { name: /contact me/i });
+    expect(contactLink).toHaveAttribute('href', 'mailto:akhilyalamanchilii@gmail.com');
+
+    const linkedInLink = screen.getByTitle('Connect with Akhil Y on LinkedIn');
+    expect(linkedInLink).toHaveAttribute('href', 'https://www.linkedin.com/in/akhil-y-b97b55289/');
+
+    const closeBtn = screen.getByLabelText('Close developer introduction');
+    fireEvent.click(closeBtn);
+
+    expect(localStorage.getItem('sharebox_dev_intro_dismissed_until')).toBeTruthy();
+
+    unmount();
+    jest.useRealTimers();
+  });
+
+  test('DeveloperIntroBanner respects 7-day dismissal window in localStorage', () => {
+    jest.useFakeTimers();
+    localStorage.setItem('sharebox_dev_intro_dismissed_until', (Date.now() + 86400000 * 5).toString());
+
+    render(<DeveloperIntroBanner />);
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    expect(screen.queryByText(/Hey, I'm Akhil!/i)).not.toBeInTheDocument();
+    localStorage.clear();
+    jest.useRealTimers();
   });
 });

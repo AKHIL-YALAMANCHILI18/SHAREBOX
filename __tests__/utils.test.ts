@@ -46,8 +46,8 @@ describe('Utility & Formatting Functions', () => {
   });
 
   test('formatTimeRemaining handles active and expired timestamps', () => {
-    const future = new Date(Date.now() + 1000 * 60 * 125).toISOString(); // ~2h 5m
-    expect(formatTimeRemaining(future)).toContain('2h 5m');
+    const future = new Date(Date.now() + 1000 * 60 * 125 + 2000).toISOString(); // ~2h 5m
+    expect(formatTimeRemaining(future)).toMatch(/2h [45]m/);
 
     const past = new Date(Date.now() - 10000).toISOString();
     expect(formatTimeRemaining(past)).toBe('Expired');

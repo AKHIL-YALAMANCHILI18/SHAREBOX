@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Footer } from '@/components/layout/footer';
+import { DeveloperIntroBanner } from '@/components/layout/dev-intro-banner';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -106,6 +107,7 @@ export default function RootLayout({
           {children}
         </div>
         <Footer />
+        <DeveloperIntroBanner />
       </body>
     </html>
   );

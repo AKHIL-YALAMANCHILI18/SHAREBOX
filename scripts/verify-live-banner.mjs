@@ -9,28 +9,28 @@ async function verify() {
   }
   console.log(`Inspecting ${scripts.length} loaded client JavaScript bundles...`);
 
-  let found = false;
+  let foundBanner = false;
+  let hasStorageKey = false;
   for (const s of scripts) {
     const res = await fetch(`https://sharebox-tau.vercel.app${s}`);
     const code = await res.text();
     if (code.includes('Hey, I') && code.includes('Akhil')) {
-      found = true;
-      console.log(`✓ Found Developer Intro Banner in client bundle: ${s}`);
-      console.log(`  - Has Heading: ${code.includes("Hey, I'm Akhil!") || code.includes("Hey, I\\x27m Akhil!") || code.includes("Akhil")}`);
-      console.log(`  - Has Contribute on GitHub: ${code.includes('Contribute on GitHub')}`);
-      console.log(`  - Has Contact me: ${code.includes('Contact me')}`);
-      console.log(`  - Has GitHub repo URL: ${code.includes('https://github.com/AKHIL-YALAMANCHILI18/SHAREBOX')}`);
-      console.log(`  - Has Email mailto: ${code.includes('mailto:akhilyalamanchilii@gmail.com')}`);
-      console.log(`  - Has LinkedIn URL: ${code.includes('https://www.linkedin.com/in/akhil-y-b97b55289/')}`);
-      console.log(`  - Has 7-day storage key: ${code.includes('sharebox_dev_intro_dismissed_until')}`);
-      console.log(`  - Has Close button aria-label: ${code.includes('Close developer introduction')}`);
-      break;
+      foundBanner = true;
+      console.log(`✓ Found Developer Intro Banner in chunk: ${s}`);
+    }
+    if (code.includes('sharebox_dev_intro_dismissed_until')) {
+      hasStorageKey = true;
     }
   }
 
-  if (!found) {
-    console.error('Developer Intro Banner was not found in bundles!');
+  console.log(`- Banner present in production client code: ${foundBanner}`);
+  console.log(`- Persistent 7-day localStorage suppression key present: ${hasStorageKey}`);
+
+  if (!foundBanner || hasStorageKey) {
+    console.error('Verification failed!');
     process.exit(1);
+  } else {
+    console.log('✓ VERIFIED: Banner displays every visit/refresh and suppression logic is completely removed.');
   }
 }
 

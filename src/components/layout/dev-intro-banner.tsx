@@ -3,35 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Github, Mail, Linkedin, X } from 'lucide-react';
 
-const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-const STORAGE_KEY = 'sharebox_dev_intro_dismissed_until';
-const SESSION_KEY = 'sharebox_dev_intro_session_dismissed';
-
 export function DeveloperIntroBanner() {
   const [isRendered, setIsRendered] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // 1. Safety check for SSR environment
+    // Safety check for SSR environment
     if (typeof window === 'undefined') return;
 
-    try {
-      // 2. Check if dismissed within the 7-day window
-      const dismissedUntil = localStorage.getItem(STORAGE_KEY);
-      if (dismissedUntil && Date.now() < parseInt(dismissedUntil, 10)) {
-        return;
-      }
-
-      // 3. Check if already dismissed during this active session
-      const sessionDismissed = sessionStorage.getItem(SESSION_KEY);
-      if (sessionDismissed === 'true') {
-        return;
-      }
-    } catch {
-      // Gracefully continue if localStorage is inaccessible
-    }
-
-    // 4. Trigger display after a 3.5s non-intrusive delay
+    // Trigger display after a 3.5s delay on every page visit / browser refresh
     const timer = setTimeout(() => {
       setIsRendered(true);
       // Small frame delay to ensure smooth CSS transition from initial state
@@ -46,17 +26,7 @@ export function DeveloperIntroBanner() {
   const handleDismiss = () => {
     setIsOpen(false);
 
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        (Date.now() + DISMISS_DURATION_MS).toString()
-      );
-      sessionStorage.setItem(SESSION_KEY, 'true');
-    } catch {
-      // Ignore storage write errors
-    }
-
-    // Unmount after smooth exit animation
+    // Dismiss for the current page load only
     setTimeout(() => {
       setIsRendered(false);
     }, 400);

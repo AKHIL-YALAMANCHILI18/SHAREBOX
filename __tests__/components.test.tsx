@@ -77,7 +77,7 @@ describe('UI Component Library', () => {
     expect(screen.getByText(/© 2026 SHAREBOX\. All rights reserved\./i)).toBeInTheDocument();
   });
 
-  test('DeveloperIntroBanner appears after delay and can be dismissed', () => {
+  test('DeveloperIntroBanner appears after delay and dismisses for current page load only', () => {
     jest.useFakeTimers();
     localStorage.clear();
     sessionStorage.clear();
@@ -104,23 +104,30 @@ describe('UI Component Library', () => {
     const closeBtn = screen.getByLabelText('Close developer introduction');
     fireEvent.click(closeBtn);
 
-    expect(localStorage.getItem('sharebox_dev_intro_dismissed_until')).toBeTruthy();
+    // Verify NO persistent storage keys are set
+    expect(localStorage.getItem('sharebox_dev_intro_dismissed_until')).toBeNull();
+    expect(sessionStorage.getItem('sharebox_dev_intro_session_dismissed')).toBeNull();
+
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(screen.queryByText(/Hey, I'm Akhil!/i)).not.toBeInTheDocument();
 
     unmount();
     jest.useRealTimers();
   });
 
-  test('DeveloperIntroBanner respects 7-day dismissal window in localStorage', () => {
+  test('DeveloperIntroBanner appears again on browser refresh / subsequent mount', () => {
     jest.useFakeTimers();
-    localStorage.setItem('sharebox_dev_intro_dismissed_until', (Date.now() + 86400000 * 5).toString());
 
-    render(<DeveloperIntroBanner />);
+    const { unmount } = render(<DeveloperIntroBanner />);
     act(() => {
-      jest.advanceTimersByTime(5000);
+      jest.advanceTimersByTime(4000);
     });
 
-    expect(screen.queryByText(/Hey, I'm Akhil!/i)).not.toBeInTheDocument();
-    localStorage.clear();
+    expect(screen.getByText(/Hey, I'm Akhil!/i)).toBeInTheDocument();
+    unmount();
     jest.useRealTimers();
   });
 });

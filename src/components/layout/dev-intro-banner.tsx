@@ -11,14 +11,14 @@ export function DeveloperIntroBanner() {
     // Safety check for SSR environment
     if (typeof window === 'undefined') return;
 
-    // Trigger display after a 3.5s delay on every page visit / browser refresh
+    // Trigger display after a 700ms (0.7s) delay on every page visit / browser refresh
     const timer = setTimeout(() => {
       setIsRendered(true);
       // Small frame delay to ensure smooth CSS transition from initial state
       requestAnimationFrame(() => {
         setIsOpen(true);
       });
-    }, 3500);
+    }, 700);
 
     return () => clearTimeout(timer);
   }, []);

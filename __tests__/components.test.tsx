@@ -85,8 +85,15 @@ describe('UI Component Library', () => {
     const { unmount } = render(<DeveloperIntroBanner />);
     expect(screen.queryByText(/Hey, I'm Akhil!/i)).not.toBeInTheDocument();
 
+    // Not visible before 700ms
     act(() => {
-      jest.advanceTimersByTime(4000);
+      jest.advanceTimersByTime(500);
+    });
+    expect(screen.queryByText(/Hey, I'm Akhil!/i)).not.toBeInTheDocument();
+
+    // Visible after 700ms
+    act(() => {
+      jest.advanceTimersByTime(300);
     });
 
     expect(screen.getByText(/Hey, I'm Akhil!/i)).toBeInTheDocument();
@@ -123,7 +130,7 @@ describe('UI Component Library', () => {
 
     const { unmount } = render(<DeveloperIntroBanner />);
     act(() => {
-      jest.advanceTimersByTime(4000);
+      jest.advanceTimersByTime(800);
     });
 
     expect(screen.getByText(/Hey, I'm Akhil!/i)).toBeInTheDocument();

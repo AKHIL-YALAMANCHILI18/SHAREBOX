@@ -23,3 +23,24 @@ const DISPLAY_NAMES = [
 export function getRandomDisplayName(): string {
   return DISPLAY_NAMES[Math.floor(Math.random() * DISPLAY_NAMES.length)];
 }
+
+/**
+ * Sanitizes and validates a user-provided display name.
+ * Trims whitespace, removes control characters, and enforces length between 1 and 50 characters.
+ * Returns null if the name is empty or only whitespace.
+ */
+export function sanitizeDisplayName(name?: string | null): string | null {
+  if (!name || typeof name !== 'string') return null;
+  const cleaned = name.replace(/[\x00-\x1F\x7F]/g, '').trim().replace(/\s+/g, ' ');
+  if (cleaned.length === 0) return null;
+  return cleaned.slice(0, 50);
+}
+
+/**
+ * Resolves a display name: returns the sanitized user name if valid,
+ * otherwise falls back to a friendly randomly generated name.
+ */
+export function resolveDisplayName(userProvidedName?: string | null): string {
+  const sanitized = sanitizeDisplayName(userProvidedName);
+  return sanitized || getRandomDisplayName();
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, ArrowRight, Sparkles, KeyRound, AlertCircle, Shuffle, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,32 @@ export function Hero() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  // Restore saved display name from previous session if present
+  useEffect(() => {
+    try {
+      const savedName = localStorage.getItem('sharebox_user_name');
+      if (savedName && typeof savedName === 'string') {
+        setDisplayName(savedName.slice(0, 50));
+      }
+    } catch {
+      // Storage unavailable or disabled
+    }
+  }, []);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.slice(0, 50);
+    setDisplayName(val);
+    try {
+      if (val.trim()) {
+        localStorage.setItem('sharebox_user_name', val.trim());
+      } else {
+        localStorage.removeItem('sharebox_user_name');
+      }
+    } catch {
+      // Storage unavailable or disabled
+    }
+  };
+
   // Handle Create Room (Random or Custom)
   const handleCreateRoom = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -31,11 +57,12 @@ export function Hero() {
       }
     }
 
+    const cleanName = displayName.trim();
     setIsCreating(true);
     try {
       const payload: { displayName?: string; codeType: 'random' | 'custom'; customCode?: string } = {
         codeType: createType,
-        displayName: displayName.trim() || undefined,
+        displayName: cleanName || undefined,
       };
 
       if (createType === 'custom') {
@@ -54,7 +81,15 @@ export function Hero() {
         throw new Error(data.error || 'Failed to create room');
       }
 
-      router.push(`/room/${data.room.code}`);
+      // Persist chosen name
+      try {
+        if (cleanName) {
+          localStorage.setItem('sharebox_user_name', cleanName);
+        }
+      } catch {}
+
+      const nameQuery = cleanName ? `?name=${encodeURIComponent(cleanName)}` : '';
+      router.push(`/room/${data.room.code}${nameQuery}`);
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to create room');
       setIsCreating(false);
@@ -76,6 +111,7 @@ export function Hero() {
       return;
     }
 
+    const cleanName = displayName.trim();
     setIsJoining(true);
     setJoinError(null);
 
@@ -83,7 +119,7 @@ export function Hero() {
       const res = await fetch(`/api/rooms/${cleanCode}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName: displayName.trim() || undefined }),
+        body: JSON.stringify({ displayName: cleanName || undefined }),
       });
 
       if (!res.ok) {
@@ -91,7 +127,15 @@ export function Hero() {
         throw new Error(errorData.error || 'Failed to join room');
       }
 
-      router.push(`/room/${cleanCode}`);
+      // Persist chosen name
+      try {
+        if (cleanName) {
+          localStorage.setItem('sharebox_user_name', cleanName);
+        }
+      } catch {}
+
+      const nameQuery = cleanName ? `?name=${encodeURIComponent(cleanName)}` : '';
+      router.push(`/room/${cleanCode}${nameQuery}`);
     } catch (err) {
       setJoinError(err instanceof Error ? err.message : 'Room not found or expired');
       setIsJoining(false);
@@ -132,7 +176,8 @@ export function Hero() {
           <Input
             placeholder="Your name (optional)"
             value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
+            onChange={handleNameChange}
+            maxLength={50}
             className="text-center text-xs h-9 bg-surface"
           />
         </div>

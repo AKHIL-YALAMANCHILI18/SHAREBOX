@@ -1,7 +1,7 @@
 import { sanitizeFilename, validateFileSize, validateMimeType } from '@/lib/security/sanitize';
 import { generateRoomCode, isValidRoomCode } from '@/lib/security/hash';
 import { checkRateLimit } from '@/lib/security/rate-limit';
-import { RATE_LIMITS, MAX_FILE_SIZE, ROOM_EXPIRY_HOURS, ROOM_CODE_LENGTH } from '@/lib/constants';
+import { RATE_LIMITS, MAX_FILE_SIZE, ROOM_EXPIRY_HOURS, ROOM_CODE_LENGTH, sanitizeDisplayName, resolveDisplayName } from '@/lib/constants';
 
 describe('Room & Transfer Business Logic', () => {
   test('generates valid room code with 6 digits and no leading zero issues', () => {
@@ -23,6 +23,38 @@ describe('Room & Transfer Business Logic', () => {
     expect(isValidRoomCode('1234567')).toBe(false);
     expect(isValidRoomCode('abcdef')).toBe(false);
     expect(isValidRoomCode('12 345')).toBe(false);
+  });
+
+  test('sanitizes and validates display names properly', () => {
+    expect(sanitizeDisplayName('Akhil')).toBe('Akhil');
+    expect(sanitizeDisplayName('  Akhil Y  ')).toBe('Akhil Y');
+    expect(sanitizeDisplayName('Akhil    Yalamanchili')).toBe('Akhil Yalamanchili');
+    expect(sanitizeDisplayName('')).toBeNull();
+    expect(sanitizeDisplayName('   ')).toBeNull();
+    expect(sanitizeDisplayName(null)).toBeNull();
+    expect(sanitizeDisplayName(undefined)).toBeNull();
+
+    // Enforce 50 chars limit
+    const longName = 'A'.repeat(60);
+    expect(sanitizeDisplayName(longName)).toHaveLength(50);
+  });
+
+  test('resolves custom name when provided and falls back to random name when empty', () => {
+    expect(resolveDisplayName('Akhil')).toBe('Akhil');
+    expect(resolveDisplayName('  Jane Doe  ')).toBe('Jane Doe');
+
+    // Fallbacks
+    const fallback1 = resolveDisplayName('');
+    expect(typeof fallback1).toBe('string');
+    expect(fallback1.length).toBeGreaterThan(0);
+
+    const fallback2 = resolveDisplayName('   ');
+    expect(typeof fallback2).toBe('string');
+    expect(fallback2.length).toBeGreaterThan(0);
+
+    const fallback3 = resolveDisplayName(null);
+    expect(typeof fallback3).toBe('string');
+    expect(fallback3.length).toBeGreaterThan(0);
   });
 
   test('validates 24-hour expiration calculation', () => {

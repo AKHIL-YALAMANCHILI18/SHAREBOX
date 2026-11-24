@@ -7,7 +7,7 @@ import {
   generateSessionToken,
   hashSessionToken,
 } from '@/lib/security/session';
-import { getRandomDisplayName } from '@/lib/constants';
+import { getRandomDisplayName, sanitizeDisplayName, resolveDisplayName } from '@/lib/constants';
 import { RoomClient } from '@/components/room/room-client';
 import { RoomExpired } from '@/components/room/room-expired';
 import { RoomHeader } from '@/components/room/room-header';
@@ -17,6 +17,7 @@ export const dynamic = 'force-dynamic';
 
 interface RoomPageProps {
   params: Promise<{ code: string }>;
+  searchParams?: Promise<{ name?: string }>;
 }
 
 export async function generateMetadata({ params }: RoomPageProps): Promise<Metadata> {
@@ -27,8 +28,10 @@ export async function generateMetadata({ params }: RoomPageProps): Promise<Metad
   };
 }
 
-export default async function RoomPage({ params }: RoomPageProps) {
+export default async function RoomPage({ params, searchParams }: RoomPageProps) {
   const { code } = await params;
+  const rawQueryName = (await searchParams)?.name;
+  const requestedName = sanitizeDisplayName(rawQueryName);
 
   // Validate numeric room code format (6 digits, supporting legacy 8 digits)
   if (!code || !/^\d{6,8}$/.test(code)) {
@@ -87,6 +90,14 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
     if (partData) {
       participant = partData as Participant;
+      // If user explicitly provided a new name and it differs, update it
+      if (requestedName && participant.display_name !== requestedName) {
+        await supabase
+          .from('participants')
+          .update({ display_name: requestedName })
+          .eq('id', participant.id);
+        participant.display_name = requestedName;
+      }
     }
   }
 
@@ -94,7 +105,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
   if (!participant) {
     const token = generateSessionToken();
     const tokenHash = hashSessionToken(token);
-    const displayName = getRandomDisplayName();
+    const displayName = resolveDisplayName(requestedName);
 
     const { data: newPart, error: createPartError } = await supabase
       .from('participants')

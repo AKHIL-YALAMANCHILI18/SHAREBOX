@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { generateRoomCode } from '@/lib/security/hash';
 import { generateSessionToken, hashSessionToken, setSessionCookie } from '@/lib/security/session';
 import { checkRateLimit, getClientIp } from '@/lib/security/rate-limit';
-import { RATE_LIMITS, getRandomDisplayName, ROOM_EXPIRY_HOURS } from '@/lib/constants';
+import { RATE_LIMITS, getRandomDisplayName, ROOM_EXPIRY_HOURS, sanitizeDisplayName, resolveDisplayName } from '@/lib/constants';
 import type { CreateRoomRequest, CreateRoomResponse, ApiError } from '@/types';
 
 export async function POST(request: Request) {
@@ -20,14 +20,14 @@ export async function POST(request: Request) {
     }
 
     // 2. Parse request body
-    let displayName = '';
+    let userProvidedName: string | null = null;
     let codeType: 'random' | 'custom' = 'random';
     let customCode = '';
 
     try {
       const body: CreateRoomRequest = await request.json();
-      if (body.displayName && typeof body.displayName === 'string') {
-        displayName = body.displayName.trim().slice(0, 50);
+      if (body.displayName) {
+        userProvidedName = sanitizeDisplayName(body.displayName);
       }
       if (body.codeType === 'custom') {
         codeType = 'custom';
@@ -39,9 +39,7 @@ export async function POST(request: Request) {
       // Body is optional
     }
 
-    if (!displayName) {
-      displayName = getRandomDisplayName();
-    }
+    const displayName = userProvidedName || getRandomDisplayName();
 
     const supabase = getSupabaseAdmin();
     let room = null;

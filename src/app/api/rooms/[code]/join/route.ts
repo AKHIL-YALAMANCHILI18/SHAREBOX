@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { generateSessionToken, hashSessionToken, setSessionCookie, getSessionToken } from '@/lib/security/session';
 import { checkRateLimit, getClientIp } from '@/lib/security/rate-limit';
-import { RATE_LIMITS, getRandomDisplayName } from '@/lib/constants';
+import { RATE_LIMITS, getRandomDisplayName, sanitizeDisplayName, resolveDisplayName } from '@/lib/constants';
 import type { JoinRoomRequest, JoinRoomResponse, FileRecord, Room, ApiError } from '@/types';
 
 interface RouteParams {
@@ -59,19 +59,17 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     // 5. Parse display name
-    let displayName = '';
+    let userProvidedName: string | null = null;
     try {
       const body: JoinRoomRequest = await request.json();
-      if (body.displayName && typeof body.displayName === 'string') {
-        displayName = body.displayName.trim().slice(0, 50);
+      if (body.displayName) {
+        userProvidedName = sanitizeDisplayName(body.displayName);
       }
     } catch {
       // Optional body
     }
 
-    if (!displayName) {
-      displayName = getRandomDisplayName();
-    }
+    const displayName = userProvidedName || getRandomDisplayName();
 
     // 6. Check existing session
     let sessionToken = await getSessionToken(code);
@@ -87,16 +85,20 @@ export async function POST(request: Request, { params }: RouteParams) {
         .single();
 
       if (existingPart) {
-        if (!existingPart.is_active) {
-          // Reactivate participant
-          await supabase
-            .from('participants')
-            .update({ is_active: true })
-            .eq('id', existingPart.id);
+        const updateFields: { is_active: boolean; display_name?: string } = { is_active: true };
+        // If user explicitly provided a name, update it!
+        if (userProvidedName && existingPart.display_name !== userProvidedName) {
+          updateFields.display_name = userProvidedName;
         }
+
+        await supabase
+          .from('participants')
+          .update(updateFields)
+          .eq('id', existingPart.id);
+
         participant = {
           id: existingPart.id,
-          display_name: existingPart.display_name,
+          display_name: updateFields.display_name || existingPart.display_name,
         };
       }
     }

@@ -236,4 +236,131 @@ describe('Room Participants & Realtime Synchronization', () => {
     expect(hookResult.result.current.participants).toHaveLength(1);
     expect(hookResult.result.current.participants[0].id).toBe('part-current');
   });
+
+  test('preserves custom display name during room creation and marks with (You)', async () => {
+    const creatorUser: Participant = {
+      id: 'creator-1',
+      room_id: 'room-111',
+      display_name: 'Akhil',
+      session_token_hash: 'hash_akhil',
+      joined_at: new Date().toISOString(),
+      is_active: true,
+    };
+
+    let hookResult: any;
+    await act(async () => {
+      hookResult = renderHook(() =>
+        useRoom({
+          initialRoom: mockRoom,
+          initialParticipant: creatorUser,
+          initialFiles: [],
+          initialParticipants: [
+            { id: 'creator-1', display_name: 'Akhil', online: true },
+          ],
+        })
+      );
+    });
+
+    render(
+      <ParticipantsBar
+        participants={hookResult.result.current.participants}
+        currentParticipantId="creator-1"
+      />
+    );
+
+    expect(screen.getByText('Akhil')).toBeInTheDocument();
+    expect(screen.getByText('(You)')).toBeInTheDocument();
+  });
+
+  test('preserves custom display name during room joining and in realtime updates', async () => {
+    const joiningUser: Participant = {
+      id: 'joiner-2',
+      room_id: 'room-111',
+      display_name: 'Suresh',
+      session_token_hash: 'hash_suresh',
+      joined_at: new Date().toISOString(),
+      is_active: true,
+    };
+
+    let hookResult: any;
+    await act(async () => {
+      hookResult = renderHook(() =>
+        useRoom({
+          initialRoom: mockRoom,
+          initialParticipant: joiningUser,
+          initialFiles: [],
+          initialParticipants: [
+            { id: 'creator-1', display_name: 'Akhil', online: true },
+            { id: 'joiner-2', display_name: 'Suresh', online: true },
+          ],
+        })
+      );
+    });
+
+    render(
+      <ParticipantsBar
+        participants={hookResult.result.current.participants}
+        currentParticipantId="joiner-2"
+      />
+    );
+
+    expect(screen.getByText('Suresh')).toBeInTheDocument();
+    expect(screen.getByText('Akhil')).toBeInTheDocument();
+    expect(screen.getByText('(You)')).toBeInTheDocument();
+
+    // Verify Suresh is marked (You), but Akhil is not marked (You)
+    const youLabels = screen.getAllByText('(You)');
+    expect(youLabels).toHaveLength(1);
+  });
+
+  test('name persists after simulated refresh / API refetch', async () => {
+    const persistentUser: Participant = {
+      id: 'user-persist',
+      room_id: 'room-111',
+      display_name: 'Akhil Y',
+      session_token_hash: 'hash_persist',
+      joined_at: new Date().toISOString(),
+      is_active: true,
+    };
+
+    // Simulate API returning the database record on page refresh
+    (global.fetch as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            participants: [
+              { id: 'user-persist', display_name: 'Akhil Y', online: true },
+              { id: 'peer-2', display_name: 'Maple', online: true },
+            ],
+          }),
+      })
+    );
+
+    let hookResult: any;
+    await act(async () => {
+      hookResult = renderHook(() =>
+        useRoom({
+          initialRoom: mockRoom,
+          initialParticipant: persistentUser,
+          initialFiles: [],
+          initialParticipants: [
+            { id: 'user-persist', display_name: 'Akhil Y', online: true },
+          ],
+        })
+      );
+    });
+
+    expect(hookResult.result.current.participants.some((p: any) => p.display_name === 'Akhil Y')).toBe(true);
+
+    render(
+      <ParticipantsBar
+        participants={hookResult.result.current.participants}
+        currentParticipantId="user-persist"
+      />
+    );
+
+    expect(screen.getByText('Akhil Y')).toBeInTheDocument();
+    expect(screen.getByText('(You)')).toBeInTheDocument();
+  });
 });

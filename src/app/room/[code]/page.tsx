@@ -114,6 +114,23 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
     await setSessionCookie(token, code);
     participant = newPart as Participant;
+
+    // Broadcast newly created participant to peers in room
+    try {
+      await supabase.channel(`room:${room.id}`).send({
+        type: 'broadcast',
+        event: 'participant_joined',
+        payload: {
+          participant: {
+            id: participant.id,
+            display_name: participant.display_name,
+            online: true,
+          },
+        },
+      });
+    } catch (rtErr) {
+      console.warn('Realtime broadcast error on direct join:', rtErr);
+    }
   }
 
   // 4. Fetch existing files for room
@@ -125,11 +142,35 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
   const files = (filesData || []) as FileRecord[];
 
+  // 5. Fetch all active participants for room
+  const { data: participantsData } = await supabase
+    .from('participants')
+    .select('id, display_name, is_active, joined_at')
+    .eq('room_id', room.id)
+    .eq('is_active', true)
+    .order('joined_at', { ascending: true });
+
+  const initialParticipants = (participantsData || []).map((p: any) => ({
+    id: p.id,
+    display_name: p.display_name,
+    online: true,
+  }));
+
+  // Ensure current participant is always present
+  if (participant && !initialParticipants.some((p) => p.id === participant.id)) {
+    initialParticipants.push({
+      id: participant.id,
+      display_name: participant.display_name,
+      online: true,
+    });
+  }
+
   return (
     <RoomClient
       initialRoom={room}
       initialParticipant={participant}
       initialFiles={files}
+      initialParticipants={initialParticipants}
     />
   );
 }

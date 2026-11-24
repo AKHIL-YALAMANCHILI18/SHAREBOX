@@ -8,18 +8,20 @@ import { FileList } from './file-list';
 import { RoomExpired } from './room-expired';
 import { useRoom } from '@/hooks/use-room';
 import { useCountdown } from '@/hooks/use-countdown';
-import type { Room, Participant, FileRecord } from '@/types';
+import type { Room, Participant, FileRecord, PresenceParticipant } from '@/types';
 
 export interface RoomClientProps {
   initialRoom: Room;
   initialParticipant: Participant;
   initialFiles: FileRecord[];
+  initialParticipants?: PresenceParticipant[];
 }
 
 export function RoomClient({
   initialRoom,
   initialParticipant,
   initialFiles,
+  initialParticipants,
 }: RoomClientProps) {
   const {
     room,
@@ -34,6 +36,7 @@ export function RoomClient({
     initialRoom,
     initialParticipant,
     initialFiles,
+    initialParticipants,
   });
 
   const { isExpired } = useCountdown(room.expires_at);

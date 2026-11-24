@@ -25,11 +25,33 @@ export async function POST(request: Request, { params }: RouteParams) {
       const tokenHash = hashSessionToken(sessionToken);
       const supabase = getSupabaseAdmin();
 
-      // Deactivate participant
-      await supabase
+      // Find participant details
+      const { data: part } = await supabase
         .from('participants')
-        .update({ is_active: false })
-        .eq('session_token_hash', tokenHash);
+        .select('id, room_id, display_name')
+        .eq('session_token_hash', tokenHash)
+        .single();
+
+      if (part) {
+        // Deactivate participant
+        await supabase
+          .from('participants')
+          .update({ is_active: false })
+          .eq('id', part.id);
+
+        // Broadcast participant left event via Realtime channel
+        try {
+          await supabase.channel(`room:${part.room_id}`).send({
+            type: 'broadcast',
+            event: 'participant_left',
+            payload: {
+              participantId: part.id,
+            },
+          });
+        } catch (rtErr) {
+          console.warn('Realtime broadcast error on leave:', rtErr);
+        }
+      }
 
       // Clear cookie
       await clearSessionCookie(code);

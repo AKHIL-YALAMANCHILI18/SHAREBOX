@@ -55,6 +55,12 @@ export interface CreateRoomResponse {
   participant: { id: string; display_name: string };
 }
 
+export interface PresenceParticipant {
+  id: string;
+  display_name: string;
+  online: boolean;
+}
+
 export interface JoinRoomRequest {
   code: string;
   displayName?: string;
@@ -65,6 +71,7 @@ export interface JoinRoomResponse {
   sessionToken: string;
   participant: { id: string; display_name: string };
   files: FileRecord[];
+  participants?: PresenceParticipant[];
 }
 
 export interface UploadInitRequest {

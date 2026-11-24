@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { UserCheck } from 'lucide-react';
-import type { PresenceParticipant } from '@/hooks/use-realtime';
+import type { PresenceParticipant } from '@/types';
 
 export interface ParticipantsBarProps {
   participants: PresenceParticipant[];
@@ -13,6 +13,13 @@ export function ParticipantsBar({
   participants,
   currentParticipantId,
 }: ParticipantsBarProps) {
+  // Sort so current participant (You) is always displayed first, then others alphabetically
+  const sortedParticipants = [...participants].sort((a, b) => {
+    if (a.id === currentParticipantId) return -1;
+    if (b.id === currentParticipantId) return 1;
+    return a.display_name.localeCompare(b.display_name);
+  });
+
   return (
     <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
       <div className="flex items-center gap-1.5 text-xs text-secondary-text font-medium flex-shrink-0">
@@ -21,20 +28,22 @@ export function ParticipantsBar({
       </div>
 
       <div className="flex items-center gap-1.5 flex-wrap">
-        {participants.map((p) => {
+        {sortedParticipants.map((p) => {
           const isCurrent = p.id === currentParticipantId;
           return (
             <div
               key={p.id}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                 isCurrent
                   ? 'bg-accent-light text-accent border-indigo-200'
                   : 'bg-surface text-primary-text border-sb-border'
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0 animate-pulse" />
-              <span className="truncate max-w-[100px]">{p.display_name}</span>
-              {isCurrent && <span className="text-[10px] opacity-75">(You)</span>}
+              <span className="truncate max-w-[120px]" title={p.display_name}>
+                {p.display_name}
+              </span>
+              {isCurrent && <span className="text-[10px] opacity-75 font-semibold">(You)</span>}
             </div>
           );
         })}

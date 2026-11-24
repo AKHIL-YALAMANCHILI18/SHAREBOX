@@ -102,6 +102,24 @@ export async function GET(request: Request, { params }: RouteParams) {
       uploader_name: f.participants?.display_name || 'Anonymous',
     }));
 
+    // 6. Fetch all active participants for this room
+    const { data: partsData, error: partsError } = await supabase
+      .from('participants')
+      .select('id, display_name, is_active, joined_at')
+      .eq('room_id', room.id)
+      .eq('is_active', true)
+      .order('joined_at', { ascending: true });
+
+    if (partsError) {
+      console.error('Error fetching participants:', partsError);
+    }
+
+    const participants = (partsData || []).map((p: any) => ({
+      id: p.id,
+      display_name: p.display_name,
+      online: true,
+    }));
+
     return NextResponse.json({
       room: {
         id: room.id,
@@ -112,6 +130,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       } as Room,
       files,
       currentParticipant,
+      participants,
     });
   } catch (err) {
     console.error('Unhandled error in GET /api/rooms/[code]:', err);

@@ -133,6 +133,23 @@ export async function POST(request: Request, { params }: RouteParams) {
       await setSessionCookie(sessionToken, room.code);
     }
 
+    // Broadcast participant joined event via Realtime channel
+    try {
+      await supabase.channel(`room:${room.id}`).send({
+        type: 'broadcast',
+        event: 'participant_joined',
+        payload: {
+          participant: {
+            id: participant.id,
+            display_name: participant.display_name,
+            online: true,
+          },
+        },
+      });
+    } catch (rtErr) {
+      console.warn('Realtime broadcast error on join:', rtErr);
+    }
+
     // 9. Fetch current files in room
     const { data: filesData } = await supabase
       .from('files')
@@ -167,6 +184,20 @@ export async function POST(request: Request, { params }: RouteParams) {
       uploader_name: f.participants?.display_name || 'Anonymous',
     }));
 
+    // 10. Fetch all active participants in room
+    const { data: partsData } = await supabase
+      .from('participants')
+      .select('id, display_name, is_active, joined_at')
+      .eq('room_id', room.id)
+      .eq('is_active', true)
+      .order('joined_at', { ascending: true });
+
+    const participants = (partsData || []).map((p: any) => ({
+      id: p.id,
+      display_name: p.display_name,
+      online: true,
+    }));
+
     const responsePayload: JoinRoomResponse = {
       room: {
         id: room.id,
@@ -178,6 +209,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       sessionToken: sessionToken || '',
       participant,
       files,
+      participants,
     };
 
     return NextResponse.json(responsePayload, { status: 200 });

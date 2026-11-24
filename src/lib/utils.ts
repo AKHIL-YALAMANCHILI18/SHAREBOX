@@ -58,6 +58,9 @@ export function getFileTypeCategory(filename: string): string {
 }
 
 export function formatRoomCode(code: string): string {
-  if (code.length !== 8) return code;
-  return `${code.slice(0, 4)} ${code.slice(4)}`;
+  if (!code) return '';
+  const clean = code.trim();
+  if (clean.length === 6) return `${clean.slice(0, 3)} ${clean.slice(3)}`;
+  if (clean.length === 8) return `${clean.slice(0, 4)} ${clean.slice(4)}`;
+  return clean;
 }

@@ -9,9 +9,9 @@
 SHAREBOX provides effortless peer-to-peer style file exchange between any two devices without mandatory accounts, software installation, or file format limitations. 
 
 ### Core Experience
-1. **Create a room**: Click "Create Room" to generate a secure, unique 8-digit numeric code.
+1. **Create a room**: Click "Create Room" to generate a secure, unique 6-digit numeric code, or choose your own custom 6-digit code.
 2. **Upload files**: Drag and drop any file (videos, code, executables, archives, spreadsheets, documents).
-3. **Share code**: Share the 8-digit code or direct invitation link with your peer.
+3. **Share code**: Share the 6-digit code or direct invitation link with your peer.
 4. **Instant sync**: Both participants can upload and download simultaneously in real time.
 5. **24-hour expiration**: The room, database records, and stored files are automatically purged after 24 hours.
 
@@ -82,7 +82,7 @@ sharebox/
 │   │   │       │   ├── join/route.ts # Join existing room
 │   │   │       │   ├── leave/route.ts # Leave room session
 │   │   │       │   └── route.ts    # Room status & file list
-│   │   │       └── route.ts        # Create 8-digit room
+│   │   │       └── route.ts        # Create 6-digit room (random or custom)
 │   │   ├── globals.css             # Tailwind base & custom styles
 │   │   ├── layout.tsx              # Root HTML shell & metadata
 │   │   ├── not-found.tsx           # 404 handler

@@ -7,7 +7,7 @@ export function HowItWorks() {
       num: '01',
       title: 'Create a room',
       description:
-        'Instant creation in one click. Receive a secure 8-digit numeric room code with a 24-hour lifetime.',
+        'Instant creation in one click. Receive a secure 6-digit numeric room code with a 24-hour lifetime.',
       icon: <Sparkles className="w-5 h-5 text-accent" />,
     },
     {
@@ -21,7 +21,7 @@ export function HowItWorks() {
       num: '03',
       title: 'Share the code',
       description:
-        'Share the 8-digit code or direct link. No login or installation required for anyone to join.',
+        'Share the 6-digit code or direct link. No login or installation required for anyone to join.',
       icon: <Share2 className="w-5 h-5 text-accent" />,
     },
     {

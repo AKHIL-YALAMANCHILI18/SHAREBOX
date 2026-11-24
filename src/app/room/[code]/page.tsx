@@ -30,8 +30,8 @@ export async function generateMetadata({ params }: RoomPageProps): Promise<Metad
 export default async function RoomPage({ params }: RoomPageProps) {
   const { code } = await params;
 
-  // Validate 8-digit numeric room code format
-  if (!code || !/^\d{8}$/.test(code)) {
+  // Validate numeric room code format (6 digits, supporting legacy 8 digits)
+  if (!code || !/^\d{6,8}$/.test(code)) {
     notFound();
   }
 

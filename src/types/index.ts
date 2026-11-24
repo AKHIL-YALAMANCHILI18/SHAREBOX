@@ -45,6 +45,8 @@ export interface UploadSession {
 
 export interface CreateRoomRequest {
   displayName?: string;
+  codeType?: 'random' | 'custom';
+  customCode?: string;
 }
 
 export interface CreateRoomResponse {

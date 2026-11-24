@@ -1,16 +1,28 @@
 import { sanitizeFilename, validateFileSize, validateMimeType } from '@/lib/security/sanitize';
-import { generateRoomCode } from '@/lib/security/hash';
+import { generateRoomCode, isValidRoomCode } from '@/lib/security/hash';
 import { checkRateLimit } from '@/lib/security/rate-limit';
-import { RATE_LIMITS, MAX_FILE_SIZE, ROOM_EXPIRY_HOURS } from '@/lib/constants';
+import { RATE_LIMITS, MAX_FILE_SIZE, ROOM_EXPIRY_HOURS, ROOM_CODE_LENGTH } from '@/lib/constants';
 
 describe('Room & Transfer Business Logic', () => {
-  test('generates valid room code with 8 digits and no leading zero issues', () => {
+  test('generates valid room code with 6 digits and no leading zero issues', () => {
+    expect(ROOM_CODE_LENGTH).toBe(6);
     for (let i = 0; i < 20; i++) {
       const code = generateRoomCode();
-      expect(code).toHaveLength(8);
-      expect(parseInt(code, 10)).toBeGreaterThanOrEqual(10000000);
-      expect(parseInt(code, 10)).toBeLessThanOrEqual(99999999);
+      expect(code).toHaveLength(6);
+      expect(isValidRoomCode(code)).toBe(true);
+      expect(parseInt(code, 10)).toBeGreaterThanOrEqual(100000);
+      expect(parseInt(code, 10)).toBeLessThanOrEqual(999999);
     }
+  });
+
+  test('validates custom room code format strictly', () => {
+    expect(isValidRoomCode('123456')).toBe(true);
+    expect(isValidRoomCode('000000')).toBe(true);
+    expect(isValidRoomCode('999999')).toBe(true);
+    expect(isValidRoomCode('12345')).toBe(false);
+    expect(isValidRoomCode('1234567')).toBe(false);
+    expect(isValidRoomCode('abcdef')).toBe(false);
+    expect(isValidRoomCode('12 345')).toBe(false);
   });
 
   test('validates 24-hour expiration calculation', () => {
@@ -30,6 +42,19 @@ describe('Room & Transfer Business Logic', () => {
     }
 
     const blocked = checkRateLimit(`create:${ip}`, limit);
+    expect(blocked.allowed).toBe(false);
+  });
+
+  test('enforces rate limits on custom room creation attempts', () => {
+    const ip = '192.168.1.105';
+    const limit = RATE_LIMITS.createCustomRoom;
+
+    for (let i = 0; i < limit.maxRequests; i++) {
+      const result = checkRateLimit(`create_custom_room:${ip}`, limit);
+      expect(result.allowed).toBe(true);
+    }
+
+    const blocked = checkRateLimit(`create_custom_room:${ip}`, limit);
     expect(blocked.allowed).toBe(false);
   });
 

@@ -21,7 +21,8 @@ describe('Utility & Formatting Functions', () => {
     expect(formatFileSize(1024 * 1024 * 1024 * 2)).toBe('2 GB');
   });
 
-  test('formatRoomCode splits 8 digits into two 4-digit groups', () => {
+  test('formatRoomCode formats 6-digit codes and legacy 8-digit codes', () => {
+    expect(formatRoomCode('123456')).toBe('123 456');
     expect(formatRoomCode('12345678')).toBe('1234 5678');
     expect(formatRoomCode('1234')).toBe('1234');
   });
@@ -81,11 +82,11 @@ describe('Security & Sanitization', () => {
     expect(validateMimeType('invalid mime')).toBe('application/octet-stream');
   });
 
-  test('generateRoomCode produces unique 8-digit numeric codes', () => {
+  test('generateRoomCode produces unique 6-digit numeric codes', () => {
     for (let i = 0; i < 50; i++) {
       const code = generateRoomCode();
-      expect(code).toMatch(/^[1-9][0-9]{7}$/);
-      expect(code.length).toBe(8);
+      expect(code).toMatch(/^[1-9][0-9]{5}$/);
+      expect(code.length).toBe(6);
     }
   });
 

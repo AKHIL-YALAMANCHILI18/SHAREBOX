@@ -8,6 +8,13 @@ import { Progress } from '@/components/ui/progress';
 import { CopyButton } from '@/components/ui/copy-button';
 import { Footer } from '@/components/layout/footer';
 import { DeveloperIntroBanner } from '@/components/layout/dev-intro-banner';
+import { Hero } from '@/components/landing/hero';
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
 
 describe('UI Component Library', () => {
   test('Button renders children and handles click events', () => {
@@ -51,7 +58,7 @@ describe('UI Component Library', () => {
 
   test('CopyButton renders and executes copy action', () => {
     const onCopy = jest.fn();
-    render(<CopyButton value="12345678" label="Copy Code" onCopySuccess={onCopy} />);
+    render(<CopyButton value="123456" label="Copy Code" onCopySuccess={onCopy} />);
     const btn = screen.getByRole('button', { name: /copy code/i });
     expect(btn).toBeInTheDocument();
   });
@@ -136,5 +143,34 @@ describe('UI Component Library', () => {
     expect(screen.getByText(/Hey, I'm Akhil!/i)).toBeInTheDocument();
     unmount();
     jest.useRealTimers();
+  });
+
+  test('Hero renders both Random and Custom code generation options and toggles between them', () => {
+    render(<Hero />);
+
+    // Default is Random code mode
+    expect(screen.getByRole('button', { name: /create room now/i })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Enter 6-digit code')).not.toBeInTheDocument();
+
+    // Toggle to Custom code mode
+    const customTab = screen.getByRole('button', { name: /custom/i });
+    fireEvent.click(customTab);
+
+    // Shows 6-digit code input and Custom Create button (initially disabled)
+    const customInput = screen.getByPlaceholderText('Enter 6-digit code');
+    expect(customInput).toBeInTheDocument();
+    const createCustomBtn = screen.getByRole('button', { name: /create custom room/i });
+    expect(createCustomBtn).toBeDisabled();
+
+    // Type 6 digits
+    fireEvent.change(customInput, { target: { value: '654321' } });
+    expect(customInput).toHaveValue('654321');
+    expect(createCustomBtn).toBeEnabled();
+
+    // Toggle back to Random mode
+    const randomTab = screen.getByRole('button', { name: /random/i });
+    fireEvent.click(randomTab);
+    expect(screen.getByRole('button', { name: /create room now/i })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Enter 6-digit code')).not.toBeInTheDocument();
   });
 });

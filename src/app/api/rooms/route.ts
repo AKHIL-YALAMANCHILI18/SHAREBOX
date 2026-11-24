@@ -8,8 +8,9 @@ import type { CreateRoomRequest, CreateRoomResponse, ApiError } from '@/types';
 
 export async function POST(request: Request) {
   try {
-    // 1. Enforce rate limiting
     const ip = getClientIp(request);
+
+    // 1. Enforce base rate limiting on room creation
     const rateCheck = checkRateLimit(`create_room:${ip}`, RATE_LIMITS.createRoom);
     if (!rateCheck.allowed) {
       return NextResponse.json<ApiError>(
@@ -20,10 +21,19 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     let displayName = '';
+    let codeType: 'random' | 'custom' = 'random';
+    let customCode = '';
+
     try {
       const body: CreateRoomRequest = await request.json();
       if (body.displayName && typeof body.displayName === 'string') {
         displayName = body.displayName.trim().slice(0, 50);
+      }
+      if (body.codeType === 'custom') {
+        codeType = 'custom';
+        if (typeof body.customCode === 'string') {
+          customCode = body.customCode.trim();
+        }
       }
     } catch {
       // Body is optional
@@ -34,46 +44,138 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
-
-    // 3. Generate unique room code with retries
     let room = null;
-    let roomCode = '';
-    const maxRetries = 3;
 
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      roomCode = generateRoomCode();
+    // 3. Option A: Custom Code
+    if (codeType === 'custom') {
+      // Enforce rate limiting specifically for custom room-code attempts
+      const customRateCheck = checkRateLimit(`create_custom_room:${ip}`, RATE_LIMITS.createCustomRoom);
+      if (!customRateCheck.allowed) {
+        return NextResponse.json<ApiError>(
+          { error: 'Too many custom code attempts. Please wait a minute or use a random code.' },
+          { status: 429, headers: { 'Retry-After': String(Math.ceil((customRateCheck.resetAt - Date.now()) / 1000)) } }
+        );
+      }
+
+      // Validate exactly 6 numeric digits
+      if (!customCode || !/^\d{6}$/.test(customCode)) {
+        return NextResponse.json<ApiError>(
+          { error: 'Custom room code must be exactly 6 numeric digits (0–9).' },
+          { status: 400 }
+        );
+      }
+
+      // Check uniqueness against all active room codes
+      const { data: existingActive } = await supabase
+        .from('rooms')
+        .select('id, expires_at, is_active')
+        .eq('code', customCode)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (existingActive) {
+        // If room is actively in use and has not expired yet
+        if (new Date(existingActive.expires_at).getTime() > Date.now()) {
+          return NextResponse.json<ApiError>(
+            {
+              error: `Room code "${customCode}" is already in use by an active room. Please choose another 6-digit code.`,
+              code: 'CODE_ALREADY_EXISTS',
+            },
+            { status: 409 }
+          );
+        } else {
+          // Room expired but cron hasn't marked it inactive yet; deactivate it to free the code safely
+          await supabase.from('rooms').update({ is_active: false }).eq('id', existingActive.id);
+        }
+      }
+
+      // Insert custom room with database-level uniqueness enforcement
       const expiresAt = new Date(Date.now() + ROOM_EXPIRY_HOURS * 60 * 60 * 1000).toISOString();
-
-      const { data, error } = await supabase
+      const { data: createdRoom, error: insertError } = await supabase
         .from('rooms')
         .insert({
-          code: roomCode,
+          code: customCode,
           expires_at: expiresAt,
           is_active: true,
         })
         .select()
         .single();
 
-      if (!error && data) {
-        room = data;
-        break;
-      }
+      if (insertError) {
+        // Check for unique collision (Postgres error 23505)
+        if (insertError.code === '23505') {
+          return NextResponse.json<ApiError>(
+            {
+              error: `Room code "${customCode}" is already in use by an active room. Please choose another 6-digit code.`,
+              code: 'CODE_ALREADY_EXISTS',
+            },
+            { status: 409 }
+          );
+        }
 
-      // Check if collision error (unique constraint violation code 23505)
-      if (error && error.code !== '23505') {
-        console.error('Room creation database error:', error);
+        console.error('Custom room creation database error:', insertError);
         return NextResponse.json<ApiError>(
-          { error: 'Failed to create room' },
+          { error: 'Failed to create room with custom code.' },
           { status: 500 }
         );
       }
-    }
 
-    if (!room) {
-      return NextResponse.json<ApiError>(
-        { error: 'Could not generate unique room code. Please try again.' },
-        { status: 500 }
-      );
+      room = createdRoom;
+    } else {
+      // 3. Option B: Random Code (default) with safe retry logic
+      const maxRetries = 5;
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const candidateCode = generateRoomCode();
+
+        // Check if an active room already exists with this code
+        const { data: existingActive } = await supabase
+          .from('rooms')
+          .select('id, expires_at, is_active')
+          .eq('code', candidateCode)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (existingActive) {
+          if (new Date(existingActive.expires_at).getTime() <= Date.now()) {
+            await supabase.from('rooms').update({ is_active: false }).eq('id', existingActive.id);
+          } else {
+            // Active collision; retry with fresh random code
+            continue;
+          }
+        }
+
+        const expiresAt = new Date(Date.now() + ROOM_EXPIRY_HOURS * 60 * 60 * 1000).toISOString();
+        const { data, error } = await supabase
+          .from('rooms')
+          .insert({
+            code: candidateCode,
+            expires_at: expiresAt,
+            is_active: true,
+          })
+          .select()
+          .single();
+
+        if (!error && data) {
+          room = data;
+          break;
+        }
+
+        if (error && error.code !== '23505') {
+          console.error('Room creation database error:', error);
+          return NextResponse.json<ApiError>(
+            { error: 'Failed to create room' },
+            { status: 500 }
+          );
+        }
+      }
+
+      if (!room) {
+        return NextResponse.json<ApiError>(
+          { error: 'Could not generate unique room code. Please try again.' },
+          { status: 500 }
+        );
+      }
     }
 
     // 4. Create participant session

@@ -13,7 +13,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   try {
     const { code } = await params;
 
-    if (!code || !/^\d{8}$/.test(code)) {
+    if (!code || !/^\d{6,8}$/.test(code)) {
       return NextResponse.json<ApiError>(
         { error: 'Invalid room code' },
         { status: 400 }

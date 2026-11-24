@@ -25,10 +25,10 @@ export async function POST(request: Request, { params }: RouteParams) {
       );
     }
 
-    // 2. Validate room code
-    if (!code || !/^\d{8}$/.test(code)) {
+    // 2. Validate room code (6 digits, supporting legacy 8 digits)
+    if (!code || !/^\d{6,8}$/.test(code)) {
       return NextResponse.json<ApiError>(
-        { error: 'Invalid room code format. Must be an 8-digit number.' },
+        { error: 'Invalid room code format. Must be a 6-digit number.' },
         { status: 400 }
       );
     }

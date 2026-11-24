@@ -39,7 +39,7 @@ export async function authenticateParticipant(
         const match = cookieHeader.match(new RegExp(`(?:^|; )sb_session_${roomCode}=([^;]*)`));
         if (match) token = decodeURIComponent(match[1]);
       } else {
-        const match = cookieHeader.match(/(?:^|; )sb_session_[0-9]{8}=([^;]*)/);
+        const match = cookieHeader.match(/(?:^|; )sb_session_[0-9]{6,8}=([^;]*)/);
         if (match) token = decodeURIComponent(match[1]);
       }
     }

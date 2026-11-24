@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: '%s | SHAREBOX',
   },
   description:
-    'Universal code-based file transfer platform. Transfer files of any format securely with 8-digit numeric codes, real-time peer sync, and automatic 24-hour expiration.',
+    'Universal code-based file transfer platform. Transfer files of any format securely with 6-digit numeric codes, real-time peer sync, and automatic 24-hour expiration.',
   keywords: [
     'SHAREBOX',
     'secure file transfer',

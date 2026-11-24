@@ -31,9 +31,9 @@ export async function POST(request: Request) {
     }
 
     const roomCode = url.searchParams.get('roomCode') || body?.roomCode;
-    if (!roomCode || !/^\d{8}$/.test(roomCode)) {
+    if (!roomCode || !/^\d{6,8}$/.test(roomCode)) {
       return NextResponse.json<ApiError>(
-        { error: 'A valid 8-digit roomCode is required.' },
+        { error: 'A valid roomCode is required.' },
         { status: 400 }
       );
     }

@@ -13,10 +13,10 @@ export async function GET(request: Request, { params }: RouteParams) {
   try {
     const { code } = await params;
 
-    // 1. Validate room code format (8 digits)
-    if (!code || !/^\d{8}$/.test(code)) {
+    // 1. Validate room code format (6 digits, supporting legacy 8 digits)
+    if (!code || !/^\d{6,8}$/.test(code)) {
       return NextResponse.json<ApiError>(
-        { error: 'Invalid room code format. Expected 8 digits.' },
+        { error: 'Invalid room code format. Expected 6 digits.' },
         { status: 400 }
       );
     }
